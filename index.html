@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Matcha Survey</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-image: url('https://img.freepik.com/free-vector/matcha-tea-background-theme_23-2148556793.jpg?t=st=1732368890~exp=1732372490~hmac=70de548e2241e9727789a103d7b4bb42e7fe774755f5fd853a0285b4bea69933&w=1380'); /* เปลี่ยนแบล็กกราวด์ */
+        background-size: cover;
+        color: #333;
+      }
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 10px;
+        text-align: center;
+      }
+      .question {
+        margin-bottom: 20px;
+      }
+      button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      img {
+        width: 30%;
+        height: auto;
+        margin: 10px;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      }
+      img:hover {
+        transform: scale(1.1);
+      }
+    </style>
+    <script>
+      let currentPage = 0; // หน้าแรกเริ่มที่ 0
+      let score = 0;
+      let responses = {}; // เก็บคำตอบแต่ละข้อ
+      let selectedMenuImage = ""; // เก็บรูปที่ผู้ใช้เลือกในหน้า 6
+      let selectedMenuText = ""; // เก็บข้อความใต้รูปที่เลือก
+
+      const pages = [
+        /* Home Page */
+        `<div class="question">
+          <h1>สวัสดี</h1>
+          <p>ยินดีต้อนรับเข้าสู่แบบสำรวจ Matcha Lover</p>
+        </div>`,
+        /* Page 1 */
+        `<div class="question">
+          <label>คุณชอบฉันมากแค่ไหน:</label>
+          <select id="question1">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>`,
+        /* Page 2 */
+        `<div class="question">
+          <label>คุณกินฉันบ่อยแค่ไหน:</label>
+          <select id="question2">
+            <option value="5">กินทุกวัน</option>
+            <option value="4">กิน 2-3 วันต่ออาทิตย์</option>
+            <option value="3">กินอาทิตย์ละครั้ง</option>
+            <option value="2">กินเดือนละครั้ง</option>
+          </select>
+        </div>`,
+        /* Page 3 */
+        `<div class="question">
+          <label>คุณกินฉันช่วงไหน:</label>
+          <select id="question3">
+            <option value="1">เช้า</option>
+            <option value="1">กลางวัน</option>
+            <option value="1">เย็น</option>
+            <option value="2">ทุกเวลา</option>
+          </select>
+        </div>`,
+        /* Page 4 */
+        `<div class="question">
+          <label>คุณชอบฉันคนแค่ไหน:</label>
+          <select id="question4">
+            <option value="NISHIO">NISHIO</option>
+            <option value="MATCHASUKI">MATCHASUKI</option>
+            <option value="ALL">กินได้หมดขอแค่เป็นมัทฉะ</option>
+          </select>
+        </div>`,
+        /* Page 5 */
+        `<div class="question">
+          <label>ทำไมถึงชอบฉัน:</label>
+          <input type="text" id="reason" placeholder="พิมพ์คำตอบของคุณ">
+        </div>`,
+        /* Page 6: รูปเมนู */
+        `<div class="question">
+          <h3>เลือกรูปเมนูที่คุณชอบ:</h3>
+          <div>
+            <img src="https://doithaicoffee.com/wp-content/uploads/2022/08/DF12FFB5-4160-4A6A-8F81-BEF7984DA70E.jpeg" alt="มัทฉะลาเต้" onclick="selectMenu('https://doithaicoffee.com/wp-content/uploads/2022/08/DF12FFB5-4160-4A6A-8F81-BEF7984DA70E.jpeg', 'มัทฉะลาเต้')">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROp0v82f5elYuxzqAYLG3Xg780yeMN93aoNA&s" alt="เค้กมัทฉะ" onclick="selectMenu('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROp0v82f5elYuxzqAYLG3Xg780yeMN93aoNA&s', 'เค้กมัทฉะ')">
+          </div>
+          <div>
+            <img src="matcha_icecream.jpg" alt="ไอศกรีมมัทฉะ" onclick="selectMenu('matcha_icecream.jpg', 'ไอศกรีมมัทฉะ')">
+            <img src="matcha_roll.jpg" alt="โรลเค้กมัทฉะ" onclick="selectMenu('matcha_roll.jpg', 'โรลเค้กมัทฉะ')">
+          </div>
+        </div>`,
+        /* Page 7: สรุป */
+        `<div class="question">
+          <h3>สรุปผลคะแนนของคุณ:</h3>
+          <p id="scoreResult"></p>
+          <h3>รูปเมนูที่คุณเลือก:</h3>
+          <img id="selectedImage" src="" alt="รูปที่เลือก" style="display: none;">
+          <p id="selectedImageText" style="font-size: 16px; font-weight: bold;"></p>
+          <button onclick="sendDataToGoogleSheet()">ส่งข้อมูล</button> <!-- ปุ่มส่งข้อมูล -->
+          <button onclick="restartSurvey()">ลองทำอีกครั้ง</button>
+        </div>`
+      ];
+
+      function renderPage() {
+        const container = document.querySelector('.container');
+        container.innerHTML = pages[currentPage];
+
+        // หน้าสุดท้าย
+        if (currentPage === pages.length - 1) {
+          const resultText = score >= 10
+            ? "คุณเนี่ยมันมัทฉะ lover ของจริง"
+            : score > 5
+            ? "คุณชอบฉันแหละ แต่ไม่ที่สุดนะ"
+            : "คุณไม่ได้รักฉันจริงๆหรอก เชอะ!!!";
+
+          document.getElementById("scoreResult").textContent = resultText;
+
+          // แสดงรูปเมนูที่เลือก
+          if (selectedMenuImage) {
+            const selectedImage = document.getElementById("selectedImage");
+            selectedImage.src = selectedMenuImage;
+            selectedImage.style.display = "block";
+
+            const selectedImageText = document.getElementById("selectedImageText");
+            selectedImageText.textContent = selectedMenuText; // แสดงข้อความใต้รูป
+          }
+
+        } else if (currentPage !== 5 && currentPage !== 6) { // ไม่มีปุ่มในหน้าเลือกรูปเมนู
+          const button = document.createElement("button");
+          button.textContent = "ถัดไป";
+          button.onclick = () => nextPage();
+          container.appendChild(button);
+        } else if (currentPage === 5) { // หน้าที่ 5: "ทำไมถึงชอบฉัน"
+          const button = document.createElement("button");
+          button.textContent = "ถัดไป";
+          button.onclick = () => nextPage();
+          container.appendChild(button);
+        }
+      }
+
+      function selectMenu(image, text) {
+        selectedMenuImage = image; // บันทึกชื่อรูปที่เลือก
+        selectedMenuText = text; // บันทึกข้อความใต้รูป
+        nextPage(); // ไปหน้าถัดไป
+      }
+
+      function nextPage() {
+        const currentSelect = document.querySelector("select, input");
+        if (currentSelect) {
+          const value = currentSelect.value;
+          responses[`question${currentPage}`] = value;
+          if (currentPage > 0 && currentPage < 4) score += parseInt(value || 0); // เก็บคะแนนในหน้า 1-3
+        }
+
+        currentPage++;
+        renderPage();
+      }
+
+      function restartSurvey() {
+        currentPage = 0;
+        score = 0;
+        responses = {};
+        selectedMenuImage = "";
+        selectedMenuText = "";
+        renderPage();
+      }
+
+      function sendDataToGoogleSheet() {
+        // เก็บข้อมูลที่กรอกในฟอร์ม
+        const data = {
+          question1: document.getElementById("question1").value,
+          question2: document.getElementById("question2").value,
+          question3: document.getElementById("question3").value,
+          question4: document.getElementById("question4").value,
+          reason: document.getElementById("reason").value,
+          score: score
+        };
+
+        // ส่งข้อมูลไปยัง Google Apps Script
+        fetch('https://script.google.com/macros/s/AKfycbzzsQx5nIZg0Ih1mSVI92njFO9TyhYhZyRKXoLWa3Sv7hJEDbw48lNCXHpxd_bCnk7g/exec', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log("Success:", data);
+          alert("ข้อมูลถูกบันทึกเรียบร้อย");
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+        });
+      }
+
+
+      window.onload = () => renderPage();
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Matcha Survey</h1>
+    </div>
+  </body>
+</html>
